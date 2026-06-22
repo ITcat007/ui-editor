@@ -1,16 +1,17 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { CommonUIEl, ButtonEl } from '../types/ui'
-import { isButtonEl } from '../utils/typeGuards'
+import type { CommonUIEl, UIElType, ButtonEl, ContainerEl} from '../types/ui'
+import { isButtonEl, isContainerEl } from '../utils/typeGuards'
 
 export const useEditorStore = defineStore('editor', () => {
   // State
-  const layers = ref<CommonUIEl[]>([
+  const elements = ref<CommonUIEl[]>([
     {
       id: '1',
       type: 'button',
+      name: 'Button 1',
       props: {
-        text: 'Primary Button',
+        text: 'Button 1',
         borderRadius: 18,
         gradientFrom: '#00E1FD',
         gradientTo: '#FC007A',
@@ -24,7 +25,7 @@ export const useEditorStore = defineStore('editor', () => {
 
   // Getters
   const selectedEl = computed(() =>
-    layers.value.find(el => el.id === selectedElId.value) || null
+    elements.value.find(el => el.id === selectedElId.value) || null
   )
 
   // Actions
@@ -36,7 +37,7 @@ export const useEditorStore = defineStore('editor', () => {
     id: string,
     props: Partial<ButtonEl['props']>
   ) {
-    const el = layers.value.find(item => item.id === id)
+    const el = elements.value.find(item => item.id === id)
 
     if (el && isButtonEl(el)){
       el.props = {
@@ -50,6 +51,7 @@ export const useEditorStore = defineStore('editor', () => {
     const newEl: ButtonEl = {
       id: crypto.randomUUID(),
       type: 'button',
+      name: showElementName('button'),
       props: {
         text: 'New Button',
         borderRadius: 18,
@@ -60,15 +62,74 @@ export const useEditorStore = defineStore('editor', () => {
       }
     }
 
-    layers.value.push(newEl)
+    elements.value.push(newEl)
+    selectedElId.value = newEl.id
+  }
+
+  function addContainer() {
+    const newEl: ContainerEl = {
+      id: crypto.randomUUID(),
+      type: 'container',
+      name: showElementName('container'),
+      props: {
+        borderRadius: 0,
+        padding: {
+          top: 15,
+          right: 15,
+          bottom: 15,
+          left: 15
+        },
+        background: '#4a5f7c',
+        width: 200,
+        height: 350,
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        gap: 10
+      }
+    }
+    console.log(newEl)
+    elements.value.push(newEl)
+    selectedElId.value = newEl.id
+  }
+
+  function updateContainerProps(
+    id: string,
+    props: Partial<ContainerEl['props']>
+  ) {
+    const el = elements.value.find(item => item.id === id)
+
+    if (el && isContainerEl(el)){
+      el.props = {
+        ...el.props,
+        ...props
+      };
+    }
+  }  
+
+  function showElementName(type: UIElType) {
+    const count = elements.value.filter(element => element.type === type).length + 1
+
+    switch(type) {
+      case "button":
+        return `Button ${count}`
+      case "container":
+        return `Container ${count}`        
+      case "text":
+        return `Text ${count}`        
+      default:
+        return "Element"     
+    }
   }
 
   return {
-    layers,
+    elements,
     selectedElId, 
     selectedEl,
     selectEl,
     updateButtonProps,
-    addButton
+    updateContainerProps,
+    addButton,
+    addContainer
   }
 })
